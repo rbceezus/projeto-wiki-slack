@@ -1,6 +1,6 @@
 -- CreateTable
 CREATE TABLE "Character" (
-    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
     "imageUrl" TEXT NOT NULL DEFAULT '',
     "description" TEXT NOT NULL,
@@ -10,6 +10,8 @@ CREATE TABLE "Character" (
     "ability" TEXT NOT NULL DEFAULT '',
     "weakness" TEXT NOT NULL DEFAULT '',
     "status" TEXT NOT NULL DEFAULT 'Ativo',
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Character_pkey" PRIMARY KEY ("id")
 );
