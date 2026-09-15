@@ -1,0 +1,23 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Character {
+  id              Int      @id @default(autoincrement())
+  name            String
+  imageUrl        String   @default("")
+  description     String
+  dangerLevel     Int      @default(1)
+  race            String
+  height          String
+  ability         String   @default("")
+  weakness        String   @default("")
+  status          String   @default("Ativo")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
