@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { Send, Star } from "lucide-react";
+import { useRef, useState } from "react";
+import { Send, Star, Upload, X } from "lucide-react";
 
 const inputClass =
   "w-full bg-slack-input border border-slack-input-border rounded px-3 py-2 text-sm text-slack-text-bright placeholder:text-slack-text-muted focus:outline-none focus:border-slack-blue transition-colors";
+
+const MAX_IMAGE_BYTES = 4 * 1024 * 1024; // 4MB
 
 export default function CharacterForm({ onCreated }: { onCreated: () => void }) {
   const [form, setForm] = useState({
@@ -20,9 +22,39 @@ export default function CharacterForm({ onCreated }: { onCreated: () => void }) 
   });
   const [sending, setSending] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [imageError, setImageError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   function update(field: string, value: string | number) {
     setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImageError("");
+
+    if (!file.type.startsWith("image/")) {
+      setImageError("Selecione um arquivo de imagem válido.");
+      return;
+    }
+
+    if (file.size > MAX_IMAGE_BYTES) {
+      setImageError("A imagem deve ter no máximo 4MB.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => update("imageUrl", reader.result as string);
+    reader.onerror = () => setImageError("Não foi possível ler a imagem.");
+    reader.readAsDataURL(file);
+  }
+
+  function clearImage() {
+    update("imageUrl", "");
+    setImageError("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -49,6 +81,7 @@ export default function CharacterForm({ onCreated }: { onCreated: () => void }) 
           weakness: "",
           status: "Ativo",
         });
+        clearImage();
         setSuccess(true);
         onCreated();
         setTimeout(() => setSuccess(false), 3000);
@@ -149,17 +182,57 @@ export default function CharacterForm({ onCreated }: { onCreated: () => void }) 
             </label>
           </div>
 
-          <label className="block">
+          <div>
             <span className="text-xs font-bold text-slack-text-muted uppercase tracking-wider mb-1.5 block">
-              URL da Imagem
+              Imagem
             </span>
+
             <input
-              value={form.imageUrl}
-              onChange={(e) => update("imageUrl", e.target.value)}
-              placeholder="https://exemplo.com/imagem.png"
-              className={inputClass}
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageSelect}
+              className="hidden"
+              id="character-image-upload"
             />
-          </label>
+
+            {form.imageUrl ? (
+              <div className="flex items-center gap-3">
+                <img
+                  src={form.imageUrl}
+                  alt="Pré-visualização"
+                  className="w-16 h-16 rounded-lg object-cover border border-slack-border"
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-sm text-slack-blue hover:underline"
+                >
+                  Trocar imagem
+                </button>
+                <button
+                  type="button"
+                  onClick={clearImage}
+                  className="flex items-center gap-1 text-sm text-slack-text-muted hover:text-slack-red transition-colors"
+                >
+                  <X size={14} />
+                  Remover
+                </button>
+              </div>
+            ) : (
+              <label
+                htmlFor="character-image-upload"
+                className="flex items-center gap-2 w-fit cursor-pointer bg-slack-input border border-dashed border-slack-input-border rounded px-4 py-3 text-sm text-slack-text-muted hover:border-slack-blue hover:text-slack-text-bright transition-colors"
+              >
+                <Upload size={16} />
+                Escolher imagem do computador
+              </label>
+            )}
+
+            {imageError && (
+              <p className="text-xs text-slack-red mt-1.5">{imageError}</p>
+            )}
+          </div>
 
           <label className="block">
             <span className="text-xs font-bold text-slack-text-muted uppercase tracking-wider mb-1.5 block">
